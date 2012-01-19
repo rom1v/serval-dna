@@ -2,8 +2,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-char *asterisk_extensions_conf="/data/data/org.servalproject/etc/asterisk/gatewayextensions.conf";
-char *asterisk_binary="/data/data/org.servalproject/sbin/asterisk";
+char *asterisk_extensions_conf="/data/data/org.servalproject/asterisk/etc/asterisk/gatewayextensions.conf";
+char *asterisk_binary="/data/data/org.servalproject/asterisk/sbin/asterisk";
 char *temp_file="/data/data/org.servalproject/var/temp.out";
 char *cmd_file="/data/data/org.servalproject/var/temp.cmd";
 char *shell="/system/bin/sh";
