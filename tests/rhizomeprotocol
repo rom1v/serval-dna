@@ -224,7 +224,7 @@ setup_Push() {
    setup_sync
 }
 test_Push() {
-   executeOk_servald rhizome push
+   executeOk_servald rhizome direct push
    assert bundle_received_by $BID1 $VERSION1 +B
    assert ! bundle_received_by $BID2 $VERSION2 +A
    set_instance +B
@@ -237,7 +237,7 @@ setup_Pull() {
    setup_sync
 }
 test_Pull() {
-   executeOk_servald rhizome pull
+   executeOk_servald rhizome direct pull
    assert bundle_received_by $BID2 $VERSION2 +A
    assert ! bundle_received_by $BID1 $VERSION1 +B
    set_instance +A
@@ -250,7 +250,7 @@ setup_Sync() {
    setup_sync
 }
 test_Sync() {
-   executeOk_servald rhizome sync
+   executeOk_servald rhizome direct sync
    assert bundle_received_by $BID2 $VERSION2 +A
    assert bundle_received_by $BID1 $VERSION1 +B
    set_instance +A
