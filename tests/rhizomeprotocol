@@ -213,8 +213,8 @@ setup_sync() {
    add_file file2
    BID2=$BID
    VERSION2=$VERSION
-   executeOk_servald config set rhizome.direct.address "$addr_localhost"
-   executeOk_servald config set rhizome.direct.port "$PORTA"
+   executeOk_servald config set rhizome.direct.peer.count "1"
+   executeOk_servald config set rhizome.direct.peer.0 "http://${addr_localhost}:${PORTA}"
    start_servald_instances dummy2 +B
 }
 
