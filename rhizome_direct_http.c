@@ -53,15 +53,13 @@ int rhizome_direct_form_received(rhizome_http_request *r)
 	/* A bundle to import */
 	DEBUGF("Call bundle import for rhizomedata.%d.{data,file}",
 	       r->alarm.poll.fd);
-	char cmd[1024];
-	snprintf(cmd,1024,
-		 "servald rhizome import bundle rhizomedirect.%d.data rhizomedirect.%d.manifest",
-		 r->alarm.poll.fd,r->alarm.poll.fd);
-	cmd[1023]=0;
-	int rv=system(cmd);
-	int status=-1;
-	
-	if (rv!=-1) status=WEXITSTATUS(rv);
+
+	char filepath[1024];
+	char manifestpath[1024];
+	snprintf(filepath,1024,"rhizomedirect.%d.data",r->alarm.poll.fd);
+	snprintf(manifestpath,1024,"rhizomedirect.%d.manifest",r->alarm.poll.fd);
+
+	int status=rhizome_import_from_files(manifestpath,filepath);
 	
 	DEBUGF("Import returned %d",status);
 	
