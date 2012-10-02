@@ -624,11 +624,12 @@ int rhizome_direct_parse_http_request(rhizome_http_request *r)
  
     if (path) {
       const char *submitBareFileURI=confValueGet("rhizome.api.addfile.uri", NULL);
-      
+      DEBUGF("addfileuri='%s'",submitBareFileURI?submitBareFileURI:"(null)");
+
       INFOF("RHIZOME HTTP SERVER, POST %s", alloca_toprint(1024, path, pathlen));
       if ((strcmp(path, "/rhizome/import") == 0) 
 	  ||(strcmp(path, "/rhizome/enquiry") == 0)
-	  ||(strcmp(path, submitBareFileURI)==0))
+	  ||(submitBareFileURI&&(strcmp(path, submitBareFileURI)==0)))
 	{
 	/*
 	  We know we have the complete header, so get the content length and content type
