@@ -438,7 +438,6 @@ int rhizome_direct_parse_http_request(rhizome_http_request *r)
       path = NULL;
  
     if (path) {
-      char *id = NULL;
       INFOF("RHIZOME HTTP SERVER, GET %s", alloca_toprint(1024, path, pathlen));
       if (strcmp(path, "/favicon.ico") == 0) {
 	r->request_type = RHIZOME_HTTP_REQUEST_FAVICON;
@@ -464,7 +463,6 @@ int rhizome_direct_parse_http_request(rhizome_http_request *r)
       path = NULL;
  
     if (path) {
-      char *id = NULL;
       INFOF("RHIZOME HTTP SERVER, POST %s", alloca_toprint(1024, path, pathlen));
       if ((strcmp(path, "/rhizome/import") == 0) 
 	  ||(strcmp(path, "/rhizome/enquiry") == 0))
@@ -766,10 +764,25 @@ void rhizome_direct_http_dispatch(rhizome_direct_sync_request *r)
       if (type==2&&r->pullP) {
 	DEBUGF("XXX rhizome direct http pull not yet implemented.");
 	/* Need to fetch manifest.  Once we have the manifest, then we can
-	   use our normal bundle fetch routines from rhizome_fetch.c
+	   use our normal bundle fetch routines from rhizome_fetch.c	 
+
+	   Generate a request like: GET /rhizome/manifestbybar/<hex of bar>
+	   and add it to our list of HTTP fetch requests, then watch
+	   until the request is finished.  That will give us the manifest.
+	   Then as noted above, we can use that to pull the file down using
+	   existing routines.
 	*/
+	if (!rhizome_fetch_request_manifest_by_prefix
+	    (&addr,(unsigned char *)&p[i+1],RHIZOME_BAR_PREFIX_BYTES,
+	     1 /* import, getting file if needed */))
+	  {
+	    /* Fetching the manifest, and then using it to see if we want to 
+	       fetch the file for import is all handled asynchronously, so just
+	       wait for it to finish. */
+	    while(rhizome_file_fetch_queue_count) fd_poll();
+	  }
+	
       } else if (type==1&&r->pushP) {
-	DEBUGF("XXX rhizome direct http push not yet implemented");
 	/* Form up the POST request to submit the appropriate bundle. */
 
 	/* Start by getting the manifest, which is the main thing we need, and also
