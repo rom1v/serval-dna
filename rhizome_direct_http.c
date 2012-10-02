@@ -326,7 +326,9 @@ int rhizome_direct_process_post_multipart_bytes
 {
   {
     DEBUGF("Saw %d multi-part form bytes",count);
-    FILE *f=fopen("post.log","a"); 
+    char logname[128];
+    snprintf(logname,128,"post-%08x.log",r->uuid);
+    FILE *f=fopen(logname,"a"); 
     if (f) fwrite(bytes,count,1,f);
     if (f) fclose(f);
   }
@@ -848,7 +850,7 @@ void rhizome_direct_http_dispatch(rhizome_direct_sync_request *r)
 	  int r=write(sock,&buffer[sent],len-sent);
 	  if (r>0) sent+=r;
 	  if (r<0) goto closeit;
-	}	
+	}
 
 	/* send file contents now */
 	long long rowid = -1;
@@ -887,7 +889,7 @@ void rhizome_direct_http_dispatch(rhizome_direct_sync_request *r)
 	  }
 
 	/* Send final mime boundary */
-	len+=0;
+	len=0;
 	len+=snprintf(&buffer[len],8192-len,"\r\n--%s--\r\n",boundary_string);
 	sent=0;
 	while(sent<len) {
