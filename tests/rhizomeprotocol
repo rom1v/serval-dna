@@ -302,7 +302,7 @@ EOF
    get_rhizome_server_port PORTA +A
 }
 test_HttpImport() {
-   executeOk curl --silent --form 'data=@README.WHYNOTSIPS' --form 'manifest=@README.WHYNOTSIPS.manifest' "$addr_localhost:$PORTA" --output http.output
+   executeOk curl --silent --form 'data=@README.WHYNOTSIPS' --form 'manifest=@README.WHYNOTSIPS.manifest' "http://$addr_localhost:$PORTA/rhizome/import" --output http.output
    executeOk_servald rhizome list ''
    assert_rhizome_list README.WHYNOTSIPS
 }
