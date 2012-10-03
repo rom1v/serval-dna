@@ -33,7 +33,7 @@ int rhizome_direct_clear_temporary_files(rhizome_http_request *r)
   for(i=0;fields[i];i++) {
     snprintf(filename,1024,"rhizomedirect.%d.%s",r->alarm.poll.fd,fields[i]);
     filename[1023]=0;
-    DEBUGF("Unlinking '%s'",filename);
+    unlink(filename);
   }
   return 0;
 }
@@ -174,13 +174,13 @@ int rhizome_direct_form_received(rhizome_http_request *r)
     if (strcmp(inet_ntoa(r->requestor.sin_addr),
 	       confValueGet("rhizome.api.addfile.allowedaddress","127.0.0.1")))
       {	
-	DEBUGF("Request was from %s, but is only allowed from %s",
+	DEBUGF("rhizome.api.addfile request received from %s, but is only allowed from %s",
 	       inet_ntoa(r->requestor.sin_addr),
 	       confValueGet("rhizome.api.addfile.allowedaddress",
 			    "127.0.0.1"));
 
 	rhizome_direct_clear_temporary_files(r);	     
-	return rhizome_server_simple_http_response(r,400,"Not available from here.");
+	return rhizome_server_simple_http_response(r,404,"Not available from here.");
       }
 
     switch(r->fields_seen) {
@@ -246,7 +246,6 @@ int rhizome_direct_form_received(rhizome_http_request *r)
       } else {
 	if (debug & DEBUG_RHIZOME) DEBUGF("manifest contains name=\"%s\"", name);
       }
-      DEBUGF("File name = '%s'",name);
 
       const char *senderhex
 	= rhizome_manifest_get(m, "sender", NULL, 0);
@@ -374,8 +373,6 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
   int blankLine=0;
   if (!strcmp(buffer,"\r\n")) blankLine=1;
 
-  DEBUGF("mime state: 0x%x, blankLine=%d, boundary=%d, EOF=%d, bytes=%d",
-	 r->source_flags,blankLine,boundaryLine,endOfForm,count);
   switch(r->source_flags) {
   case RD_MIME_STATE_INITIAL:
     if (boundaryLine) r->source_flags=RD_MIME_STATE_PARTHEADERS;
@@ -383,7 +380,6 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
   case RD_MIME_STATE_PARTHEADERS:
   case RD_MIME_STATE_MANIFESTHEADERS:
   case RD_MIME_STATE_DATAHEADERS:
-    DEBUGF("mime line: %s",r->request);
     if (blankLine) {
       /* End of headers */
       if (r->source_flags==RD_MIME_STATE_PARTHEADERS)
@@ -411,7 +407,6 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
       }
       snprintf(filename,1024,"rhizomedirect.%d.%s",r->alarm.poll.fd,field);
       filename[1023]=0;
-      DEBUGF("Writing to '%s'",filename);
       r->field_file=fopen(filename,"w");
       if (!r->field_file) {
 	rhizome_direct_clear_temporary_files(r);
@@ -434,7 +429,6 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
 		(r, 400, "<html><h1>Malformed multi-part form POST: Multiple content-disposition lines in single MIME encoded part.</h1></html>\r\n");
 	      return -1;
 	    }
-	  DEBUGF("Found form part '%s' name '%s'",field,name);
 	  if (!strcasecmp(field,"manifest")) 
 	    r->source_flags=RD_MIME_STATE_MANIFESTHEADERS;
 	  if (!strcasecmp(field,"data")) {
@@ -463,7 +457,9 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
     }
     else {
       int written=fwrite(r->request,count,1,r->field_file);
-      DEBUGF("wrote %d lump of %d bytes",written,count);
+      if (written<1) 
+	DEBUGF("Short write for multi-part form file -- %d bytes may be missing",
+	       count);
     }
     break;
   }
@@ -475,7 +471,6 @@ int rhizome_direct_process_mime_line(rhizome_http_request *r,char *buffer,int co
 
     /* XXX Rewind last two bytes from file if open, and close file */
 
-    DEBUGF("Found end of form");
     return rhizome_direct_form_received(r);
   }
   return 0;
@@ -485,7 +480,6 @@ int rhizome_direct_process_post_multipart_bytes
 (rhizome_http_request *r,const char *bytes,int count)
 {
   {
-    DEBUGF("Saw %d multi-part form bytes",count);
     char logname[128];
     snprintf(logname,128,"post-%08x.log",r->uuid);
     FILE *f=fopen(logname,"a"); 
@@ -556,7 +550,7 @@ int rhizome_direct_process_post_multipart_bytes
 
   r->source_count-=count;
   if (r->source_count<=0) {
-    DEBUGF("Got to end of multi-part form data");
+    /* Got to end of multi-part form data */
 
     /* If the form is still being processed, then flush things through */
     if (r->request_type<0) {
@@ -626,7 +620,6 @@ int rhizome_direct_parse_http_request(rhizome_http_request *r)
  
     if (path) {
       const char *submitBareFileURI=confValueGet("rhizome.api.addfile.uri", NULL);
-      DEBUGF("addfileuri='%s'",submitBareFileURI?submitBareFileURI:"(null)");
 
       INFOF("RHIZOME HTTP SERVER, POST %s", alloca_toprint(1024, path, pathlen));
       if ((strcmp(path, "/rhizome/import") == 0) 
